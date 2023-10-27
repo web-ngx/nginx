@@ -4206,7 +4206,7 @@ ngx_resolver_dup(ngx_resolver_t *r, void *src, size_t size)
 
     dst = ngx_resolver_alloc(r, size);
 
-    if (dst == NULL) {
+    if (dst == NULL || size == 0 || src == NULL) {
         return dst;
     }
 

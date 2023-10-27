@@ -842,7 +842,9 @@ ngx_stream_script_copy_var_code(ngx_stream_script_engine_t *e)
 
         if (value && !value->not_found) {
             p = e->pos;
-            e->pos = ngx_copy(p, value->data, value->len);
+            if (value->len) {
+                e->pos = ngx_copy(p, value->data, value->len);
+            }
 
             ngx_log_debug2(NGX_LOG_DEBUG_STREAM,
                            e->session->connection->log, 0,
