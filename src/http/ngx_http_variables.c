@@ -2158,6 +2158,9 @@ ngx_http_variable_request_body(ngx_http_request_t *r,
 
     for ( /* void */ ; cl; cl = cl->next) {
         buf = cl->buf;
+        if (buf->last == buf->pos) {
+            continue;
+        }
         p = ngx_cpymem(p, buf->pos, buf->last - buf->pos);
     }
 

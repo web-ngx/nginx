@@ -1397,11 +1397,15 @@ ngx_mail_auth_http_create_request(ngx_mail_session_t *s, ngx_pool_t *pool,
     *b->last++ = CR; *b->last++ = LF;
 
     b->last = ngx_cpymem(b->last, "Auth-User: ", sizeof("Auth-User: ") - 1);
-    b->last = ngx_copy(b->last, login.data, login.len);
+    if (login.len) {
+        b->last = ngx_copy(b->last, login.data, login.len);
+    }
     *b->last++ = CR; *b->last++ = LF;
 
     b->last = ngx_cpymem(b->last, "Auth-Pass: ", sizeof("Auth-Pass: ") - 1);
-    b->last = ngx_copy(b->last, passwd.data, passwd.len);
+    if (passwd.len) {
+        b->last = ngx_copy(b->last, passwd.data, passwd.len);
+    }
     *b->last++ = CR; *b->last++ = LF;
 
     if (s->auth_method != NGX_MAIL_AUTH_PLAIN && s->salt.len) {
@@ -1458,7 +1462,9 @@ ngx_mail_auth_http_create_request(ngx_mail_session_t *s, ngx_pool_t *pool,
 
         b->last = ngx_cpymem(b->last, "Auth-SMTP-Helo: ",
                              sizeof("Auth-SMTP-Helo: ") - 1);
-        b->last = ngx_copy(b->last, s->smtp_helo.data, s->smtp_helo.len);
+        if (s->smtp_helo.len) {
+            b->last = ngx_copy(b->last, s->smtp_helo.data, s->smtp_helo.len);
+        }
         *b->last++ = CR; *b->last++ = LF;
 
         b->last = ngx_cpymem(b->last, "Auth-SMTP-From: ",

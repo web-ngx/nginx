@@ -252,6 +252,11 @@ ngx_vslprintf(u_char *buf, u_char *last, const char *fmt, va_list args)
             case 'V':
                 v = va_arg(args, ngx_str_t *);
 
+                if (v->len == 0 || v->data == NULL) {
+                    fmt++;
+                    continue;
+                }
+
                 buf = ngx_sprintf_str(buf, last, v->data, v->len, hex);
                 fmt++;
 
@@ -260,6 +265,11 @@ ngx_vslprintf(u_char *buf, u_char *last, const char *fmt, va_list args)
             case 'v':
                 vv = va_arg(args, ngx_variable_value_t *);
 
+                if (vv->len == 0 || vv->data == NULL) {
+                    fmt++;
+                    continue;
+                }
+
                 buf = ngx_sprintf_str(buf, last, vv->data, vv->len, hex);
                 fmt++;
 
@@ -267,6 +277,11 @@ ngx_vslprintf(u_char *buf, u_char *last, const char *fmt, va_list args)
 
             case 's':
                 p = va_arg(args, u_char *);
+
+                if (slen == 0 || p == NULL) {
+                    fmt++;
+                    continue;
+                }
 
                 buf = ngx_sprintf_str(buf, last, p, slen, hex);
                 fmt++;
