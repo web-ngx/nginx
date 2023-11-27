@@ -69,7 +69,6 @@ typedef struct {
     ngx_str_t                      uri;
 } ngx_http_proxy_vars_t;
 
-
 typedef struct {
     ngx_array_t                   *flushes;
     ngx_array_t                   *lengths;
@@ -116,6 +115,8 @@ typedef struct {
 
     ngx_uint_t                     headers_hash_max_size;
     ngx_uint_t                     headers_hash_bucket_size;
+
+    ngx_flag_t                     headers_inherit;
 
 #if (NGX_HTTP_SSL)
     ngx_uint_t                     ssl;
@@ -419,6 +420,13 @@ static ngx_command_t  ngx_http_proxy_commands[] = {
       ngx_conf_set_keyval_slot,
       NGX_HTTP_LOC_CONF_OFFSET,
       offsetof(ngx_http_proxy_loc_conf_t, headers_source),
+      NULL },
+
+    { ngx_string("proxy_set_header_inherit"),
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_FLAG,
+      ngx_conf_set_flag_slot,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      offsetof(ngx_http_proxy_loc_conf_t, headers_inherit),
       NULL },
 
     { ngx_string("proxy_headers_hash_max_size"),
@@ -3618,6 +3626,8 @@ ngx_http_proxy_create_loc_conf(ngx_conf_t *cf)
 
     conf->upstream.intercept_errors = NGX_CONF_UNSET;
 
+    conf->headers_inherit = NGX_CONF_UNSET;
+
 #if (NGX_HTTP_SSL)
     conf->upstream.ssl_session_reuse = NGX_CONF_UNSET;
     conf->upstream.ssl_name = NGX_CONF_UNSET_PTR;
@@ -3666,6 +3676,8 @@ ngx_http_proxy_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     u_char                     *p;
     size_t                      size;
     ngx_int_t                   rc;
+    ngx_uint_t                  i;
+    ngx_keyval_t               *src, *h;
     ngx_hash_init_t             hash;
     ngx_http_core_loc_conf_t   *clcf;
     ngx_http_proxy_rewrite_t   *pr;
@@ -3946,6 +3958,9 @@ ngx_http_proxy_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_conf_merge_value(conf->upstream.intercept_errors,
                               prev->upstream.intercept_errors, 0);
 
+    ngx_conf_merge_value(conf->headers_inherit,
+                              prev->headers_inherit, 0);
+
 #if (NGX_HTTP_SSL)
 
     if (ngx_http_proxy_merge_ssl(cf, conf, prev) != NGX_OK) {
@@ -4127,6 +4142,24 @@ ngx_http_proxy_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
 #if (NGX_HTTP_CACHE)
         conf->headers_cache = prev->headers_cache;
 #endif
+    } else if (conf->headers_source
+               && prev->headers_source
+               && prev->headers_source != NGX_CONF_UNSET_PTR)
+    {
+        src = prev->headers_source->elts;
+
+        for (i = 0; i < prev->headers_source->nelts; i++) {
+            if (!conf->headers_inherit) {
+                continue;
+            }
+
+            h = ngx_array_push(conf->headers_source);
+            if (h == NULL) {
+                return NGX_CONF_ERROR;
+            }
+
+            *h = src[i];
+        }
     }
 
     rc = ngx_http_proxy_init_headers(cf, conf, &conf->headers,
