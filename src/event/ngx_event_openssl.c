@@ -5859,6 +5859,34 @@ ngx_ssl_get_client_v_remain(ngx_connection_t *c, ngx_pool_t *pool, ngx_str_t *s)
 }
 
 
+ngx_int_t
+ngx_ssl_get_client_tls_bind(ngx_connection_t *c, ngx_pool_t *pool, ngx_str_t *s)
+{
+    ngx_str_t   data;
+    u_char      buf[1024];
+    size_t      n;
+
+    s->len = 0;
+
+    n = SSL_get_peer_finished(c->ssl->connection, buf, sizeof(buf));
+    if (n == 0) {
+        return NGX_OK;
+    }
+    data.len = n;
+    data.data = buf;
+
+    n = ngx_base64_encoded_length(data.len);
+    s->data = ngx_palloc(pool, n);
+    if (s->data == NULL) {
+        return NGX_ERROR;
+    }
+    ngx_encode_base64(s, &data);
+    s->len = n;
+
+    return NGX_OK;
+}
+
+
 static time_t
 ngx_ssl_parse_time(
 #if OPENSSL_VERSION_NUMBER > 0x10100000L
