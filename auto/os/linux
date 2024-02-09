@@ -307,4 +307,15 @@ ngx_feature_test="struct mmsghdr msg[UIO_MAXIOV];
 . auto/feature
 
 
+ngx_feature="recvmmsg()"
+ngx_feature_name="NGX_HAVE_RECVMMSG"
+ngx_feature_run=no
+ngx_feature_incs="#include <sys/socket.h>"
+ngx_feature_path=
+ngx_feature_libs=
+ngx_feature_test="struct mmsghdr msg[64];
+                  recvmmsg(0, msg, 64, 0, NULL);"
+. auto/feature
+
+
 CC_AUX_FLAGS="$cc_aux_flags -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64"
