@@ -898,7 +898,11 @@ ngx_event_process_init(ngx_cycle_t *cycle)
 
 #if (NGX_QUIC)
         } else if (ls[i].quic) {
+#if (NGX_HAVE_RECVMMSG)
+            rev->handler = ngx_quic_recvmmsg;
+#else
             rev->handler = ngx_quic_recvmsg;
+#endif
 #if (NGX_HAVE_SENDMMSG)
             wev->handler = ngx_event_sendmmsg;
 

@@ -112,6 +112,9 @@ struct ngx_quic_stream_s {
 
 
 void ngx_quic_recvmsg(ngx_event_t *ev);
+#if (NGX_HAVE_RECVMMSG)
+void ngx_quic_recvmmsg(ngx_event_t *ev);
+#endif
 void ngx_quic_run(ngx_connection_t *c, ngx_quic_conf_t *conf);
 ngx_connection_t *ngx_quic_open_stream(ngx_connection_t *c, ngx_uint_t bidi);
 void ngx_quic_finalize_connection(ngx_connection_t *c, ngx_uint_t err,
