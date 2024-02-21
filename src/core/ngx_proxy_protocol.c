@@ -279,7 +279,13 @@ ngx_proxy_protocol_read_port(u_char *p, u_char *last, in_port_t *port,
 u_char *
 ngx_proxy_protocol_write(ngx_connection_t *c, u_char *buf, u_char *last)
 {
-    ngx_uint_t  port, lport;
+    socklen_t             local_socklen;
+    ngx_uint_t            port, lport;
+    struct sockaddr      *local_sockaddr;
+    struct sockaddr_in    sin;
+#if (NGX_HAVE_INET6)
+    struct sockaddr_in6   sin6;
+#endif
 
     if (last - buf < NGX_PROXY_PROTOCOL_V1_MAX_HEADER) {
         ngx_log_error(NGX_LOG_ALERT, c->log, 0,
@@ -312,11 +318,35 @@ ngx_proxy_protocol_write(ngx_connection_t *c, u_char *buf, u_char *last)
 
     *buf++ = ' ';
 
-    buf += ngx_sock_ntop(c->local_sockaddr, c->local_socklen, buf, last - buf,
-                         0);
+    if (c->sockaddr->sa_family == c->local_sockaddr->sa_family) {
+        local_sockaddr = c->local_sockaddr;
+        local_socklen = c->local_socklen;
+
+    } else {
+        switch (c->sockaddr->sa_family) {
+
+#if (NGX_HAVE_INET6)
+        case AF_INET6:
+            ngx_memzero(&sin6, sizeof(struct sockaddr_in6));
+            sin6.sin6_family = AF_INET6;
+            local_sockaddr = (struct sockaddr *) &sin6;
+            local_socklen = sizeof(struct sockaddr_in6);
+            break;
+#endif
+
+        default: /* AF_INET */
+            ngx_memzero(&sin, sizeof(struct sockaddr));
+            sin.sin_family = AF_INET;
+            local_sockaddr = (struct sockaddr *) &sin;
+            local_socklen = sizeof(struct sockaddr_in);
+            break;
+        }
+    }
+
+    buf += ngx_sock_ntop(local_sockaddr, local_socklen, buf, last - buf, 0);
 
     port = ngx_inet_get_port(c->sockaddr);
-    lport = ngx_inet_get_port(c->local_sockaddr);
+    lport = ngx_inet_get_port(local_sockaddr);
 
     return ngx_slprintf(buf, last, " %ui %ui" CRLF, port, lport);
 }
