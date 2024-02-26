@@ -30,6 +30,8 @@ static char *ngx_stream_upstream_resolver(ngx_conf_t *cf, ngx_command_t *cmd,
 static void *ngx_stream_upstream_create_main_conf(ngx_conf_t *cf);
 static char *ngx_stream_upstream_init_main_conf(ngx_conf_t *cf, void *conf);
 
+static void ngx_stream_upstream_worker_cleanup(ngx_cycle_t *cycle);
+
 
 static ngx_command_t  ngx_stream_upstream_commands[] = {
 
@@ -91,7 +93,7 @@ ngx_module_t  ngx_stream_upstream_module = {
     NULL,                                  /* init process */
     NULL,                                  /* init thread */
     NULL,                                  /* exit thread */
-    NULL,                                  /* exit process */
+    ngx_stream_upstream_worker_cleanup,    /* exit process */
     NULL,                                  /* exit master */
     NGX_MODULE_V1_PADDING
 };
@@ -865,4 +867,31 @@ ngx_stream_upstream_init_main_conf(ngx_conf_t *cf, void *conf)
     }
 
     return NGX_CONF_OK;
+}
+
+
+static void
+ngx_stream_upstream_worker_cleanup(ngx_cycle_t *cycle)
+{
+    ngx_uint_t                         i;
+    ngx_stream_upstream_free_pt        free;
+    ngx_stream_upstream_srv_conf_t   **uscfp;
+    ngx_stream_upstream_main_conf_t   *umcf;
+
+    umcf = ngx_stream_cycle_get_module_main_conf(cycle,
+                                                 ngx_stream_upstream_module);
+
+    if (umcf) {
+
+        uscfp = umcf->upstreams.elts;
+
+        for (i = 0; i < umcf->upstreams.nelts; i++) {
+
+            free = uscfp[i]->peer.free_upstream
+                       ? uscfp[i]->peer.free_upstream
+                       : ngx_stream_upstream_free_round_robin;
+
+            free(uscfp[i]);
+        }
+    }
 }

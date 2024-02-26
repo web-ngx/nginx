@@ -1073,3 +1073,34 @@ ngx_stream_upstream_empty_save_session(ngx_peer_connection_t *pc, void *data)
 }
 
 #endif
+
+
+void
+ngx_stream_upstream_free_round_robin(ngx_stream_upstream_srv_conf_t *us)
+{
+#if (NGX_STREAM_SSL)
+
+    ngx_uint_t                       i;
+    ngx_stream_upstream_rr_peer_t   *peer;
+    ngx_stream_upstream_rr_peers_t  *peers;
+
+    peers = us->peer.data;
+
+#if (NGX_STREAM_UPSTREAM_ZONE)
+    if (peers->shpool) {
+        return;
+    }
+#endif
+
+    for (peer = peers->peer, i = 0; peer; peer = peer->next, i++) {
+
+        if (peer->ssl_session) {
+            ngx_log_debug1(NGX_LOG_DEBUG_STREAM, ngx_cycle->log, 0,
+                           "free session: %p", peer->ssl_session);
+            ngx_ssl_free_session(peer->ssl_session);
+            peer->ssl_session = NULL;
+        }
+    }
+
+#endif
+}

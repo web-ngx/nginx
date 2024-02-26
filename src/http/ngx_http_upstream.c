@@ -201,6 +201,8 @@ static ngx_int_t ngx_http_upstream_ssl_certificate(ngx_http_request_t *r,
     ngx_http_upstream_t *u, ngx_connection_t *c);
 #endif
 
+static void ngx_http_upstream_worker_cleanup(ngx_cycle_t *cycle);
+
 
 static ngx_http_upstream_header_t  ngx_http_upstream_headers_in[] = {
 
@@ -403,7 +405,7 @@ ngx_module_t  ngx_http_upstream_module = {
     NULL,                                  /* init process */
     NULL,                                  /* init thread */
     NULL,                                  /* exit thread */
-    NULL,                                  /* exit process */
+    ngx_http_upstream_worker_cleanup,      /* exit process */
     NULL,                                  /* exit master */
     NGX_MODULE_V1_PADDING
 };
@@ -7230,4 +7232,30 @@ ngx_http_upstream_init_main_conf(ngx_conf_t *cf, void *conf)
     }
 
     return NGX_CONF_OK;
+}
+
+
+static void
+ngx_http_upstream_worker_cleanup(ngx_cycle_t *cycle)
+{
+    ngx_uint_t                       i;
+    ngx_http_upstream_free_pt        free;
+    ngx_http_upstream_srv_conf_t   **uscfp;
+    ngx_http_upstream_main_conf_t   *umcf;
+
+    umcf = ngx_http_cycle_get_module_main_conf(cycle, ngx_http_upstream_module);
+
+    if (umcf) {
+
+        uscfp = umcf->upstreams.elts;
+
+        for (i = 0; i < umcf->upstreams.nelts; i++) {
+
+            free = uscfp[i]->peer.free_upstream
+                       ? uscfp[i]->peer.free_upstream
+                       : ngx_http_upstream_free_round_robin;
+
+            free(uscfp[i]);
+        }
+    }
 }
