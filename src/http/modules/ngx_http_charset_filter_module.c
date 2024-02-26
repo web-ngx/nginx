@@ -439,7 +439,7 @@ ngx_http_source_charset(ngx_http_request_t *r, ngx_str_t *name)
     charset = lcf->source_charset;
 
     if (charset == NGX_HTTP_CHARSET_OFF) {
-        name->len = 0;
+        ngx_str_null(name);
         return charset;
     }
 
@@ -504,7 +504,7 @@ ngx_http_set_charset(ngx_http_request_t *r, ngx_str_t *charset)
          * use this charset instead of the next page charset
          */
 
-        r->headers_out.charset.len = 0;
+        ngx_str_null(&r->headers_out.charset);
         return;
     }
 

@@ -1518,7 +1518,7 @@ ngx_http_v3_parse_field_inr(ngx_connection_t *c,
 
             st->literal.length = st->pint.value;
             if (st->literal.length == 0) {
-                st->value.len = 0;
+                ngx_str_null(&st->value);
                 goto done;
             }
 
@@ -1637,7 +1637,7 @@ ngx_http_v3_parse_field_iln(ngx_connection_t *c,
 
             st->literal.length = st->pint.value;
             if (st->literal.length == 0) {
-                st->value.len = 0;
+                ngx_str_null(&st->value);
                 goto done;
             }
 

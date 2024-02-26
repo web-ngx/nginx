@@ -150,7 +150,7 @@ ngx_mail_imap_auth_state(ngx_event_t *rev)
     }
 
     tag = 1;
-    s->text.len = 0;
+    ngx_str_null(&s->text);
     ngx_str_set(&s->out, imap_ok);
 
     if (rc == NGX_OK) {
@@ -302,7 +302,7 @@ ngx_mail_imap_auth_state(ngx_event_t *rev)
                 s->buffer->last = s->buffer->start + n;
             }
 
-            s->tag.len = 0;
+            ngx_str_null(&s->tag);
         }
     }
 

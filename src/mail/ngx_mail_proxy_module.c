@@ -178,7 +178,7 @@ ngx_mail_proxy_init(ngx_mail_session_t *s, ngx_addr_t *peer)
 
     s->proxy->proxy_protocol = pcf->proxy_protocol;
 
-    s->out.len = 0;
+    ngx_str_null(&s->out);
 
     switch (s->protocol) {
 

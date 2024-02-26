@@ -587,7 +587,7 @@ ngx_http_limit_conn_zone(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     }
 
     size = 0;
-    name.len = 0;
+    ngx_str_null(&name);
 
     for (i = 2; i < cf->args->nelts; i++) {
 

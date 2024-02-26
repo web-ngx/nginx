@@ -816,7 +816,7 @@ ngx_http_autoindex_jsonp_callback(ngx_http_request_t *r, ngx_str_t *callback)
     ngx_uint_t   i;
 
     if (ngx_http_arg(r, (u_char *) "callback", 8, callback) != NGX_OK) {
-        callback->len = 0;
+        ngx_str_null(callback);
         return NGX_OK;
     }
 

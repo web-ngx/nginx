@@ -232,7 +232,7 @@ parse:
         ngx_http_set_ctx(r, ctx, ngx_http_range_body_filter_module);
 
         r->headers_out.status = NGX_HTTP_PARTIAL_CONTENT;
-        r->headers_out.status_line.len = 0;
+        ngx_str_null(&r->headers_out.status_line);
 
         if (ctx->ranges.nelts == 1) {
             return ngx_http_range_singlepart_header(r, ctx);
@@ -551,7 +551,7 @@ ngx_http_range_multipart_header(ngx_http_request_t *r,
 
     r->headers_out.content_type_len = r->headers_out.content_type.len;
 
-    r->headers_out.charset.len = 0;
+    ngx_str_null(&r->headers_out.charset);
 
     /* the size of the last boundary CRLF "--0123456789--" CRLF */
 

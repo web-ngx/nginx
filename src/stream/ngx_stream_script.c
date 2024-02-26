@@ -373,7 +373,7 @@ ngx_stream_script_compile(ngx_stream_script_compile_t *sc)
 
     for (i = 0; i < sc->source->len; /* void */ ) {
 
-        name.len = 0;
+        ngx_str_null(&name);
 
         if (sc->source->data[i] == '$') {
 

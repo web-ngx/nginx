@@ -373,9 +373,7 @@ ngx_http_auth_request(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     value = cf->args->elts;
 
     if (ngx_strcmp(value[1].data, "off") == 0) {
-        arcf->uri.len = 0;
-        arcf->uri.data = (u_char *) "";
-
+        ngx_str_set(&arcf->uri, "");
         return NGX_CONF_OK;
     }
 

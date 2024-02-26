@@ -4445,7 +4445,7 @@ ngx_http_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             return NGX_CONF_ERROR;
         }
 
-        plcf->location.len = 0;
+        ngx_str_null(&plcf->location);
     }
 
     plcf->url = *url;
