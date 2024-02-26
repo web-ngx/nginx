@@ -941,6 +941,7 @@ static void
 ngx_worker_process_exit(ngx_cycle_t *cycle)
 {
     ngx_uint_t         i;
+    ngx_event_t       *rev, *wev;
     ngx_connection_t  *c;
 
     for (i = 0; cycle->modules[i]; i++) {
@@ -990,7 +991,15 @@ ngx_worker_process_exit(ngx_cycle_t *cycle)
     ngx_exit_cycle.files_n = ngx_cycle->files_n;
     ngx_cycle = &ngx_exit_cycle;
 
+    c = cycle->connections;
+    rev = cycle->read_events;
+    wev = cycle->write_events;
+
     ngx_destroy_pool(cycle->pool);
+
+    ngx_free(c);
+    ngx_free(rev);
+    ngx_free(wev);
 
     ngx_log_error(NGX_LOG_NOTICE, ngx_cycle->log, 0, "exit");
 
