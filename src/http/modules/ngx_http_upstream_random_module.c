@@ -117,6 +117,35 @@ ngx_http_upstream_init_random(ngx_conf_t *cf, ngx_http_upstream_srv_conf_t *us)
 }
 
 
+static void
+ngx_http_upstream_free_random(ngx_http_upstream_srv_conf_t *us)
+{
+#if (NGX_HTTP_UPSTREAM_ZONE)
+
+    ngx_http_upstream_rr_peers_t         *peers;
+    ngx_http_upstream_random_srv_conf_t  *rcf;
+
+    peers = us->peer.data;
+
+    if (peers->shpool) {
+
+        rcf = ngx_http_conf_upstream_srv_conf(us,
+                                              ngx_http_upstream_random_module);
+
+        if (rcf->ranges) {
+            ngx_log_debug1(NGX_LOG_DEBUG_HTTP, ngx_cycle->log, 0,
+                           "free ranges: %p", rcf->ranges);
+            ngx_free(rcf->ranges);
+            rcf->ranges = NULL;
+        }
+    }
+
+#endif
+
+    ngx_http_upstream_free_round_robin(us);
+}
+
+
 static ngx_int_t
 ngx_http_upstream_update_random(ngx_pool_t *pool,
     ngx_http_upstream_srv_conf_t *us)
@@ -493,6 +522,7 @@ ngx_http_upstream_random(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     }
 
     uscf->peer.init_upstream = ngx_http_upstream_init_random;
+    uscf->peer.free_upstream = ngx_http_upstream_free_random;
 
     uscf->flags = NGX_HTTP_UPSTREAM_CREATE
                   |NGX_HTTP_UPSTREAM_MODIFY

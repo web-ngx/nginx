@@ -83,11 +83,13 @@ typedef ngx_int_t (*ngx_http_upstream_init_pt)(ngx_conf_t *cf,
     ngx_http_upstream_srv_conf_t *us);
 typedef ngx_int_t (*ngx_http_upstream_init_peer_pt)(ngx_http_request_t *r,
     ngx_http_upstream_srv_conf_t *us);
+typedef void (*ngx_http_upstream_free_pt)(ngx_http_upstream_srv_conf_t *us);
 
 
 typedef struct {
     ngx_http_upstream_init_pt        init_upstream;
     ngx_http_upstream_init_peer_pt   init;
+    ngx_http_upstream_free_pt        free_upstream;
     void                            *data;
 } ngx_http_upstream_peer_t;
 
