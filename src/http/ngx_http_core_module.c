@@ -1857,7 +1857,7 @@ ngx_http_send_header(ngx_http_request_t *r)
 
     if (r->err_status) {
         r->headers_out.status = r->err_status;
-        r->headers_out.status_line.len = 0;
+        ngx_str_null(&r->headers_out.status_line);
     }
 
     return ngx_http_top_header_filter(r);

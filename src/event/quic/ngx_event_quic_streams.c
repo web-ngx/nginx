@@ -727,8 +727,7 @@ ngx_quic_create_stream(ngx_connection_t *c, uint64_t id)
         addr_text.len = c->addr_text.len;
 
     } else {
-        addr_text.len = 0;
-        addr_text.data = NULL;
+        ngx_str_null(&addr_text);
     }
 
     reusable = c->reusable;

@@ -1290,7 +1290,7 @@ ngx_http_file_cache_reopen(ngx_http_request_t *r, ngx_http_cache_t *c)
     ngx_shmtx_unlock(&cache->shpool->mutex);
 
     c->secondary = 1;
-    c->file.name.len = 0;
+    ngx_str_null(&c->file.name);
     c->body_start = c->buffer_size;
 
     ngx_memcpy(c->key, c->variant, NGX_HTTP_CACHE_KEY_LEN);
@@ -1397,7 +1397,7 @@ ngx_http_file_cache_update_variant(ngx_http_request_t *r, ngx_http_cache_t *c)
 
     ngx_shmtx_unlock(&cache->shpool->mutex);
 
-    c->file.name.len = 0;
+    ngx_str_null(&c->file.name);
     c->update_variant = 1;
 
     ngx_memcpy(c->key, c->main, NGX_HTTP_CACHE_KEY_LEN);
@@ -2414,7 +2414,7 @@ ngx_http_file_cache_set_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     manager_sleep = 50;
     manager_threshold = 200;
 
-    name.len = 0;
+    ngx_str_null(&name);
     size = 0;
     max_size = NGX_MAX_OFF_T_VALUE;
     min_free = 0;

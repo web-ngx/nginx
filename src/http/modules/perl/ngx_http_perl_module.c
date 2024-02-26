@@ -240,11 +240,11 @@ ngx_http_perl_handle_request(ngx_http_request_t *r)
         uri = ctx->redirect_uri;
 
     } else {
-        uri.len = 0;
+        ngx_str_null(&uri);
     }
 
-    ctx->filename.data = NULL;
-    ctx->redirect_uri.len = 0;
+    ngx_str_null(&ctx->filename);
+    ngx_str_null(&ctx->redirect_uri);
 
     if (rc == NGX_ERROR) {
         ngx_http_finalize_request(r, rc);
@@ -366,8 +366,8 @@ ngx_http_perl_variable(ngx_http_request_t *r, ngx_http_variable_value_t *v,
     }
 
     ctx->variable = saved;
-    ctx->filename.data = NULL;
-    ctx->redirect_uri.len = 0;
+    ngx_str_null(&ctx->filename);
+    ngx_str_null(&ctx->redirect_uri);
 
     ngx_log_debug0(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
                    "perl variable done");
@@ -469,8 +469,8 @@ ngx_http_perl_ssi(ngx_http_request_t *r, ngx_http_ssi_ctx_t *ssi_ctx,
 
     }
 
-    ctx->filename.data = NULL;
-    ctx->redirect_uri.len = 0;
+    ngx_str_null(&ctx->filename);
+    ngx_str_null(&ctx->redirect_uri);
     ctx->ssi = NULL;
 
     ngx_log_debug0(NGX_LOG_DEBUG_HTTP, r->connection->log, 0, "perl ssi done");
@@ -793,7 +793,7 @@ ngx_http_perl_call_handler(pTHX_ ngx_http_request_t *r,
             return NGX_ERROR;
         }
 
-        ctx->redirect_uri.len = 0;
+        ngx_str_null(&ctx->redirect_uri);
 
         if (ctx->header_sent) {
             return NGX_ERROR;

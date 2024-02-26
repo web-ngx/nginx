@@ -449,7 +449,7 @@ ngx_http_special_response_handler(ngx_http_request_t *r, ngx_int_t error)
         }
     }
 
-    r->headers_out.content_type.len = 0;
+    ngx_str_null(&r->headers_out.content_type);
 
     clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
 

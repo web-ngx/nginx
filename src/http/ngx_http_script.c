@@ -469,7 +469,7 @@ ngx_http_script_compile(ngx_http_script_compile_t *sc)
 
     for (i = 0; i < sc->source->len; /* void */ ) {
 
-        name.len = 0;
+        ngx_str_null(&name);
 
         if (sc->source->data[i] == '$') {
 
@@ -1268,7 +1268,7 @@ ngx_http_script_regex_end_code(ngx_http_script_engine_t *e)
         e->buf.len = e->pos - e->buf.data;
 
         if (!code->add_args) {
-            r->args.len = 0;
+            ngx_str_null(&r->args);
         }
     }
 
