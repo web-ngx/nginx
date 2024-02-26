@@ -3928,7 +3928,7 @@ ngx_http_core_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_conf_merge_value(conf->etag, prev->etag, 1);
 
     ngx_conf_merge_uint_value(conf->server_tokens, prev->server_tokens,
-                              NGX_HTTP_SERVER_TOKENS_ON);
+                              NGX_HTTP_SERVER_TOKENS_OFF);
 
     ngx_conf_merge_ptr_value(conf->open_file_cache,
                               prev->open_file_cache, NULL);
