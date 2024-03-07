@@ -22,6 +22,8 @@
 
 #endif
 
+#define NGX_SENDMMSG_BUFFER  4194304 /* 4M */
+
 
 struct ngx_udp_connection_s {
     ngx_rbtree_node_t   node;
@@ -46,6 +48,23 @@ typedef union {
     struct in6_pktinfo    pkt6;
 #endif
 } ngx_addrinfo_t;
+
+
+#if (NGX_HAVE_SENDMMSG)
+
+typedef struct {
+    u_char                buffer[NGX_SENDMMSG_BUFFER];
+    struct mmsghdr        msgvec[UIO_MAXIOV];
+    size_t                size;
+    ngx_uint_t            vlen;
+} ngx_sendmmsg_batch_t;
+
+
+ssize_t ngx_sendmmsg(ngx_connection_t *c, struct msghdr *msg, int flags);
+u_char *ngx_sendmmsg_buffer(ngx_connection_t *c, size_t size);
+void ngx_event_sendmmsg(ngx_event_t *ev);
+
+#endif
 
 size_t ngx_set_srcaddr_cmsg(struct cmsghdr *cmsg,
     struct sockaddr *local_sockaddr);

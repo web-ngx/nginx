@@ -823,9 +823,11 @@ ngx_event_process_init(ngx_cycle_t *cycle)
         ls[i].connection = c;
 
         rev = c->read;
+        wev = c->write;
 
         rev->log = c->log;
         rev->accept = 1;
+        wev->log = c->log;
 
 #if (NGX_HAVE_DEFERRED_ACCEPT)
         rev->deferred_accept = ls[i].deferred_accept;
@@ -897,6 +899,14 @@ ngx_event_process_init(ngx_cycle_t *cycle)
 #if (NGX_QUIC)
         } else if (ls[i].quic) {
             rev->handler = ngx_quic_recvmsg;
+#if (NGX_HAVE_SENDMMSG)
+            wev->handler = ngx_event_sendmmsg;
+
+            c->data = ngx_pcalloc(cycle->pool, sizeof(ngx_sendmmsg_batch_t));
+            if (c->data == NULL) {
+                return NGX_ERROR;
+            }
+#endif
 #endif
         } else {
             rev->handler = ngx_event_recvmsg;

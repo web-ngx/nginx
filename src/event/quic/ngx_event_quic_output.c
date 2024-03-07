@@ -61,6 +61,7 @@ static void ngx_quic_init_packet(ngx_connection_t *c, ngx_quic_send_ctx_t *ctx,
 static ngx_uint_t ngx_quic_get_padding_level(ngx_connection_t *c);
 static ssize_t ngx_quic_send(ngx_connection_t *c, u_char *buf, size_t len,
     struct sockaddr *sockaddr, socklen_t socklen);
+static u_char *ngx_quic_send_buffer(ngx_connection_t *c);
 static void ngx_quic_set_packet_number(ngx_quic_header_t *pkt,
     ngx_quic_send_ctx_t *ctx);
 
@@ -114,14 +115,13 @@ ngx_quic_create_datagrams(ngx_connection_t *c)
 {
     size_t                  len, min;
     ssize_t                 n;
-    u_char                 *p;
+    u_char                 *dst, *p;
     uint64_t                preserved_pnum[NGX_QUIC_SEND_CTX_LAST];
     ngx_uint_t              i, pad;
     ngx_quic_path_t        *path;
     ngx_quic_send_ctx_t    *ctx;
     ngx_quic_congestion_t  *cg;
     ngx_quic_connection_t  *qc;
-    static u_char           dst[NGX_QUIC_MAX_UDP_PAYLOAD_SIZE];
 
     qc = ngx_quic_get_connection(c);
     cg = &qc->congestion;
@@ -129,6 +129,7 @@ ngx_quic_create_datagrams(ngx_connection_t *c)
 
     while (cg->in_flight < cg->window) {
 
+        dst = ngx_quic_send_buffer(c);
         p = dst;
 
         len = ngx_quic_path_limit(c, path, path->mtu);
@@ -688,12 +689,12 @@ static ssize_t
 ngx_quic_send(ngx_connection_t *c, u_char *buf, size_t len,
     struct sockaddr *sockaddr, socklen_t socklen)
 {
-    ssize_t          n;
-    struct iovec     iov;
-    struct msghdr    msg;
+    ssize_t            n;
+    struct iovec       iov;
+    struct msghdr      msg;
 #if (NGX_HAVE_ADDRINFO_CMSG)
-    struct cmsghdr  *cmsg;
-    char             msg_control[CMSG_SPACE(sizeof(ngx_addrinfo_t))];
+    struct cmsghdr    *cmsg;
+    char               msg_control[CMSG_SPACE(sizeof(ngx_addrinfo_t))];
 #endif
 
     ngx_memzero(&msg, sizeof(struct msghdr));
@@ -720,7 +721,11 @@ ngx_quic_send(ngx_connection_t *c, u_char *buf, size_t len,
     }
 #endif
 
+#if (NGX_HAVE_SENDMMSG)
+    n = ngx_sendmmsg(c, &msg, 0);
+#else
     n = ngx_sendmsg(c, &msg, 0);
+#endif
     if (n < 0) {
         return n;
     }
@@ -728,6 +733,26 @@ ngx_quic_send(ngx_connection_t *c, u_char *buf, size_t len,
     c->sent += n;
 
     return n;
+}
+
+
+static u_char *
+ngx_quic_send_buffer(ngx_connection_t *c)
+{
+    static u_char   buffer[NGX_QUIC_MAX_UDP_PAYLOAD_SIZE];
+
+#if (NGX_HAVE_SENDMMSG)
+
+    u_char         *p;
+
+    p = ngx_sendmmsg_buffer(c, NGX_QUIC_MAX_UDP_PAYLOAD_SIZE);
+    if (p) {
+        return p;
+    }
+
+#endif
+
+    return buffer;
 }
 
 
@@ -764,9 +789,9 @@ ngx_quic_set_packet_number(ngx_quic_header_t *pkt, ngx_quic_send_ctx_t *ctx)
 ngx_int_t
 ngx_quic_negotiate_version(ngx_connection_t *c, ngx_quic_header_t *inpkt)
 {
-    size_t             len;
-    ngx_quic_header_t  pkt;
-    static u_char      buf[NGX_QUIC_MAX_UDP_PAYLOAD_SIZE];
+    u_char             *buf;
+    size_t              len;
+    ngx_quic_header_t   pkt;
 
     ngx_log_debug0(NGX_LOG_DEBUG_EVENT, c->log, 0,
                    "sending version negotiation packet");
@@ -775,6 +800,8 @@ ngx_quic_negotiate_version(ngx_connection_t *c, ngx_quic_header_t *inpkt)
     pkt.flags = NGX_QUIC_PKT_LONG | NGX_QUIC_PKT_FIXED_BIT;
     pkt.dcid = inpkt->scid;
     pkt.scid = inpkt->dcid;
+
+    buf = ngx_quic_send_buffer(c);
 
     len = ngx_quic_create_version_negotiation(&pkt, buf);
 
@@ -793,10 +820,9 @@ ngx_int_t
 ngx_quic_send_stateless_reset(ngx_connection_t *c, ngx_quic_conf_t *conf,
     ngx_quic_header_t *pkt)
 {
-    u_char    *token;
+    u_char    *token, *buf;
     size_t     len, max;
     uint16_t   rndbytes;
-    u_char     buf[NGX_QUIC_MAX_SR_PACKET];
 
     ngx_log_debug0(NGX_LOG_DEBUG_EVENT, c->log, 0,
                    "quic handle stateless reset output");
@@ -818,6 +844,8 @@ ngx_quic_send_stateless_reset(ngx_connection_t *c, ngx_quic_conf_t *conf,
         len = (rndbytes % (max - NGX_QUIC_MIN_SR_PACKET + 1))
               + NGX_QUIC_MIN_SR_PACKET;
     }
+
+    buf = ngx_quic_send_buffer(c);
 
     if (RAND_bytes(buf, len - NGX_QUIC_SR_TOKEN_LEN) != 1) {
         return NGX_ERROR;
@@ -892,9 +920,7 @@ ngx_quic_send_early_cc(ngx_connection_t *c, ngx_quic_header_t *inpkt,
     ngx_quic_keys_t    keys;
     ngx_quic_frame_t   frame;
     ngx_quic_header_t  pkt;
-
-    static u_char       src[NGX_QUIC_MAX_UDP_PAYLOAD_SIZE];
-    static u_char       dst[NGX_QUIC_MAX_UDP_PAYLOAD_SIZE];
+    static u_char      src[NGX_QUIC_MAX_UDP_PAYLOAD_SIZE];
 
     ngx_memzero(&frame, sizeof(ngx_quic_frame_t));
     ngx_memzero(&pkt, sizeof(ngx_quic_header_t));
@@ -945,7 +971,7 @@ ngx_quic_send_early_cc(ngx_connection_t *c, ngx_quic_header_t *inpkt,
     pkt.payload.data = src;
     pkt.payload.len = len;
 
-    res.data = dst;
+    res.data = ngx_quic_send_buffer(c);
 
     ngx_quic_log_packet(c->log, &pkt);
 
@@ -974,7 +1000,6 @@ ngx_quic_send_retry(ngx_connection_t *c, ngx_quic_conf_t *conf,
     ngx_str_t          res, token;
     ngx_quic_header_t  pkt;
 
-    u_char             buf[NGX_QUIC_RETRY_BUFFER_SIZE];
     u_char             dcid[NGX_QUIC_SERVER_CID_LEN];
     u_char             tbuf[NGX_QUIC_TOKEN_BUF_SIZE];
 
@@ -1008,7 +1033,7 @@ ngx_quic_send_retry(ngx_connection_t *c, ngx_quic_conf_t *conf,
 
     pkt.token = token;
 
-    res.data = buf;
+    res.data = ngx_quic_send_buffer(c);
 
     if (ngx_quic_encrypt(&pkt, &res) != NGX_OK) {
         return NGX_ERROR;
@@ -1193,9 +1218,7 @@ ngx_quic_frame_sendto(ngx_connection_t *c, ngx_quic_frame_t *frame,
     ngx_quic_send_ctx_t    *ctx;
     ngx_quic_congestion_t  *cg;
     ngx_quic_connection_t  *qc;
-
     static u_char           src[NGX_QUIC_MAX_UDP_PAYLOAD_SIZE];
-    static u_char           dst[NGX_QUIC_MAX_UDP_PAYLOAD_SIZE];
 
     qc = ngx_quic_get_connection(c);
     cg = &qc->congestion;
@@ -1254,7 +1277,7 @@ ngx_quic_frame_sendto(ngx_connection_t *c, ngx_quic_frame_t *frame,
     pkt.payload.data = src;
     pkt.payload.len = len;
 
-    res.data = dst;
+    res.data = ngx_quic_send_buffer(c);
 
     ngx_quic_log_packet(c->log, &pkt);
 

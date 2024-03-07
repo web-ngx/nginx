@@ -295,4 +295,16 @@ ngx_feature_test="socklen_t optlen = sizeof(int);
 . auto/feature
 
 
+ngx_feature="sendmmsg()"
+ngx_feature_name="NGX_HAVE_SENDMMSG"
+ngx_feature_run=no
+ngx_feature_incs="#include <sys/socket.h>
+                  #include <sys/uio.h>"
+ngx_feature_path=
+ngx_feature_libs=
+ngx_feature_test="struct mmsghdr msg[UIO_MAXIOV];
+                  sendmmsg(0, msg, UIO_MAXIOV, 0);"
+. auto/feature
+
+
 CC_AUX_FLAGS="$cc_aux_flags -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64"
