@@ -2260,6 +2260,9 @@ ngx_http_parse_chunked(ngx_http_request_t *r, ngx_buf_t *b,
                 break;
             case LF:
                 state = sw_chunk_data;
+                break;
+            default:
+                ctx->skipped++;
             }
             break;
 
@@ -2304,6 +2307,9 @@ ngx_http_parse_chunked(ngx_http_request_t *r, ngx_buf_t *b,
                     goto done;
                 }
                 state = sw_trailer;
+                break;
+            default:
+                ctx->skipped++;
             }
             break;
 
@@ -2342,6 +2348,9 @@ ngx_http_parse_chunked(ngx_http_request_t *r, ngx_buf_t *b,
                 break;
             case LF:
                 state = sw_trailer;
+                break;
+            default:
+                ctx->skipped++;
             }
             break;
 
