@@ -20,6 +20,10 @@ typedef struct {
 #define NGX_HTTP_REQUEST_BODY_FILE_ON     1
 #define NGX_HTTP_REQUEST_BODY_FILE_CLEAN  2
 
+#ifndef IPPROTO_MPTCP
+#define IPPROTO_MPTCP 262
+#endif
+
 
 static ngx_int_t ngx_http_core_auth_delay(ngx_http_request_t *r);
 static void ngx_http_core_auth_delay_handler(ngx_http_request_t *r);
@@ -4078,6 +4082,13 @@ ngx_http_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         }
 #endif
 
+#if (NGX_LINUX)
+        if (ngx_strcmp(value[n].data, "mptcp") == 0) {
+            lsopt.protocol = IPPROTO_MPTCP;
+            continue;
+        }
+#endif
+
         if (ngx_strncmp(value[n].data, "backlog=", 8) == 0) {
             lsopt.backlog = ngx_atoi(value[n].data + 8, value[n].len - 8);
             lsopt.set = 1;
@@ -4380,6 +4391,11 @@ ngx_http_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         if (lsopt.proxy_protocol) {
             return "\"proxy_protocol\" parameter is incompatible with \"quic\"";
         }
+#if (NGX_LINUX)
+        if (lsopt.protocol == IPPROTO_MPTCP) {
+             return "\"mptcp\" parameter is incompatible with \"quic\"";
+        }
+#endif
     }
 
     for (n = 0; n < u.naddrs; n++) {
