@@ -9,6 +9,10 @@
 #include <ngx_core.h>
 #include <ngx_stream.h>
 
+#ifndef IPPROTO_MPTCP
+#define IPPROTO_MPTCP 262
+#endif
+
 
 static ngx_uint_t ngx_stream_preread_can_peek(ngx_connection_t *c);
 static ngx_int_t ngx_stream_preread_peek(ngx_stream_session_t *s,
@@ -984,6 +988,13 @@ ngx_stream_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         }
 #endif
 
+#if (NGX_LINUX)
+        if (ngx_strcmp(value[i].data, "mptcp") == 0) {
+            lsopt.protocol = IPPROTO_MPTCP;
+            continue;
+        }
+#endif
+
         if (ngx_strncmp(value[i].data, "backlog=", 8) == 0) {
             lsopt.backlog = ngx_atoi(value[i].data + 8, value[i].len - 8);
             lsopt.set = 1;
@@ -1250,6 +1261,12 @@ ngx_stream_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         if (lsopt.proxy_protocol) {
             return "\"proxy_protocol\" parameter is incompatible with \"udp\"";
         }
+        
+#if (NGX_LINUX)
+        if (lsopt.protocol == IPPROTO_MPTCP) {
+             return "\"mptcp\" parameter is incompatible with \"udp\"";
+        }
+#endif
     }
 
     for (n = 0; n < u.naddrs; n++) {
