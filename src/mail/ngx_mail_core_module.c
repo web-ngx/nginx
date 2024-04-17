@@ -10,6 +10,10 @@
 #include <ngx_event.h>
 #include <ngx_mail.h>
 
+#ifndef IPPROTO_MPTCP
+#define IPPROTO_MPTCP 262
+#endif
+
 
 static void *ngx_mail_core_create_main_conf(ngx_conf_t *cf);
 static void *ngx_mail_core_create_srv_conf(ngx_conf_t *cf);
@@ -475,6 +479,11 @@ ngx_mail_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
                                "ngx_mail_ssl_module");
             return NGX_CONF_ERROR;
 #endif
+        }
+
+        if (ngx_strcmp(value[i].data, "mptcp") == 0) {
+            ls->protocol = IPPROTO_MPTCP;
+            continue;
         }
 
         if (ngx_strncmp(value[i].data, "so_keepalive=", 13) == 0) {
