@@ -487,8 +487,19 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
                 continue;
             }
 
-            s = ngx_socket(ls[i].sockaddr->sa_family, ls[i].type, 0);
+            s = (ngx_socket_t) -1;
+            if (ls[i].protocol > 0) {
+                s = ngx_socket(ls[i].sockaddr->sa_family, ls[i].type,
+                               ls[i].protocol);
+                /* In case of error, retry with the default protocol */
+                ngx_log_error(NGX_LOG_NOTICE, log, 0,
+                      "socket(%d) failed, trying with 0", ls[i].protocol);
+            }
 
+            if (s == (ngx_socket_t) -1) {
+                s = ngx_socket(ls[i].sockaddr->sa_family, ls[i].type, 0);
+            }
+            
             if (s == (ngx_socket_t) -1) {
                 ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,
                               ngx_socket_n " %V failed", &ls[i].addr_text);
