@@ -3812,6 +3812,7 @@ ngx_http_v2_read_request_body(ngx_http_request_t *r)
 
     if (stream->skip_data) {
         r->request_body_no_buffering = 0;
+        r->connection->log->action = NULL;
         rb->post_handler(r);
         return NGX_OK;
     }
@@ -4066,6 +4067,7 @@ ngx_http_v2_process_request_body(ngx_http_request_t *r, u_char *pos,
     }
 
     r->read_event_handler = ngx_http_block_reading;
+    r->connection->log->action = NULL;
     rb->post_handler(r);
 
     return NGX_OK;
