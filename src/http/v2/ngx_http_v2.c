@@ -1106,7 +1106,7 @@ ngx_http_v2_state_read_data(ngx_http_v2_connection_t *h2c, u_char *pos,
         if (rc != NGX_OK && rc != NGX_AGAIN) {
 
             stream->skip_data = 1;
-            r->headers_in.content_length_n = 0;
+            r->discard_body = 1;
             r->request_body->bufs = NULL;
 
             ngx_http_finalize_request(r, rc);
@@ -3770,7 +3770,7 @@ ngx_http_v2_run_request(ngx_http_request_t *r)
                       "client prematurely closed stream");
 
         r->stream->skip_data = 1;
-        r->headers_in.content_length_n = 0;
+        r->discard_body = 1;
 
         ngx_http_finalize_request(r, NGX_HTTP_BAD_REQUEST);
         goto failed;
@@ -4204,7 +4204,7 @@ ngx_http_v2_read_client_request_body_handler(ngx_http_request_t *r)
     if (rc != NGX_OK && rc != NGX_AGAIN) {
 
         r->stream->skip_data = 1;
-        r->headers_in.content_length_n = 0;
+        r->discard_body = 1;
         r->request_body->bufs = NULL;
 
         ngx_http_finalize_request(r, rc);
@@ -4269,7 +4269,7 @@ ngx_http_v2_read_client_request_body_handler(ngx_http_request_t *r)
 error:
 
     stream->skip_data = 1;
-    r->headers_in.content_length_n = 0;
+    r->discard_body = 1;
     r->request_body->bufs = NULL;
 
     ngx_http_finalize_request(r, NGX_HTTP_INTERNAL_SERVER_ERROR);
