@@ -309,6 +309,11 @@ ngx_http_v2_init(ngx_event_t *rev)
     c->idle = 1;
     ngx_reusable_connection(c, 0);
 
+    if (ngx_exiting) {
+        ngx_http_v2_finalize_connection(h2c, NGX_HTTP_V2_NO_ERROR);
+        return;
+    }
+
     if (c->buffer) {
         p = c->buffer->pos;
         end = c->buffer->last;
