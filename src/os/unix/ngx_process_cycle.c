@@ -1135,7 +1135,7 @@ ngx_cache_manager_process_cycle(ngx_cycle_t *cycle, void *data)
 
         if (ngx_terminate || ngx_quit) {
             ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0, "exiting");
-            exit(0);
+            ngx_worker_process_exit(cycle);
         }
 
         if (ngx_reopen) {
