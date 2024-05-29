@@ -73,6 +73,9 @@ struct ngx_event_s {
     /* to test on worker exit */
     unsigned         channel:1;
     unsigned         resolver:1;
+#if (HAVE_SOCKET_CLOEXEC_PATCH)
+    unsigned         skip_socket_leak_check:1;
+#endif
 
     unsigned         cancelable:1;
 

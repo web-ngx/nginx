@@ -4551,7 +4551,13 @@ ngx_tcp_connect(ngx_resolver_connection_t *rec)
     ngx_event_t       *rev, *wev;
     ngx_connection_t  *c;
 
+#if (NGX_HAVE_SOCKET_CLOEXEC)
+    s = ngx_socket(rec->sockaddr->sa_family, SOCK_STREAM | SOCK_CLOEXEC, 0);
+
+#else
     s = ngx_socket(rec->sockaddr->sa_family, SOCK_STREAM, 0);
+
+#endif
 
     ngx_log_debug1(NGX_LOG_DEBUG_EVENT, &rec->log, 0, "TCP socket %d", s);
 
@@ -4578,6 +4584,15 @@ ngx_tcp_connect(ngx_resolver_connection_t *rec)
 
         goto failed;
     }
+
+#if (NGX_HAVE_FD_CLOEXEC)
+    if (ngx_cloexec(s) == -1) {
+        ngx_log_error(NGX_LOG_ALERT, &rec->log, ngx_socket_errno,
+                      ngx_cloexec_n " failed");
+
+        goto failed;
+    }
+#endif
 
     rev = c->read;
     wev = c->write;

@@ -955,6 +955,9 @@ ngx_worker_process_exit(ngx_cycle_t *cycle)
         for (i = 0; i < cycle->connection_n; i++) {
             if (c[i].fd != -1
                 && c[i].read
+#if (HAVE_SOCKET_CLOEXEC_PATCH)
+                && !c[i].read->skip_socket_leak_check
+#endif
                 && !c[i].read->accept
                 && !c[i].read->channel
                 && !c[i].read->resolver)

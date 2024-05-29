@@ -38,7 +38,14 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc)
 
     type = (pc->type ? pc->type : SOCK_STREAM);
 
+#if (NGX_HAVE_SOCKET_CLOEXEC)
+    s = ngx_socket(pc->sockaddr->sa_family, type | SOCK_CLOEXEC, 0);
+
+#else
     s = ngx_socket(pc->sockaddr->sa_family, type, 0);
+
+#endif
+
 
     ngx_log_debug2(NGX_LOG_DEBUG_EVENT, pc->log, 0, "%s socket %d",
                    (type == SOCK_STREAM) ? "stream" : "dgram", s);
@@ -91,6 +98,15 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc)
 
         goto failed;
     }
+
+#if (NGX_HAVE_FD_CLOEXEC)
+    if (ngx_cloexec(s) == -1) {
+        ngx_log_error(NGX_LOG_ALERT, pc->log, ngx_socket_errno,
+                      ngx_cloexec_n " failed");
+
+        goto failed;
+    }
+#endif
 
     if (pc->local) {
 
