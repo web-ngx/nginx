@@ -806,6 +806,18 @@ ngx_event_process_init(ngx_cycle_t *cycle)
 
 #if (NGX_HAVE_REUSEPORT)
         if (ls[i].reuseport && ls[i].worker != ngx_worker) {
+            ngx_log_debug2(NGX_LOG_DEBUG_CORE, cycle->log, 0,
+                           "closing unused fd:%d listening on %V",
+                           ls[i].fd, &ls[i].addr_text);
+
+            if (ngx_close_socket(ls[i].fd) == -1) {
+                ngx_log_error(NGX_LOG_EMERG, cycle->log, ngx_socket_errno,
+                              ngx_close_socket_n " %V failed",
+                              &ls[i].addr_text);
+            }
+
+            ls[i].fd = (ngx_socket_t) -1;
+
             continue;
         }
 #endif
