@@ -11,7 +11,7 @@
 
 
 #if defined OPENSSL_IS_BORINGSSL                                              \
-    || defined LIBRESSL_VERSION_NUMBER                                        \
+    || defined LIBRESSL_HAS_QUIC                                              \
     || defined BABASSL_VERSION_NUMBER                                         \
     || NGX_QUIC_OPENSSL_COMPAT
 #define NGX_QUIC_BORINGSSL_API   1
