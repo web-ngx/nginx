@@ -190,6 +190,7 @@ static u_char      *ngx_error_log;
 static u_char      *ngx_conf_file;
 static u_char      *ngx_conf_params;
 static char        *ngx_signal;
+ngx_pool_t         *saved_init_cycle_pool = NULL;
 
 
 static char **ngx_os_environ;
@@ -265,6 +266,8 @@ main(int argc, char *const *argv)
     if (init_cycle.pool == NULL) {
         return 1;
     }
+
+    saved_init_cycle_pool = init_cycle.pool;
 
     if (ngx_save_argv(&init_cycle, argc, argv) != NGX_OK) {
         return 1;

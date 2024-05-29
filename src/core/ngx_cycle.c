@@ -787,6 +787,10 @@ old_shm_zone_done:
 
     if (ngx_process == NGX_PROCESS_MASTER || ngx_is_init_cycle(old_cycle)) {
 
+        if (ngx_is_init_cycle(old_cycle)) {
+            saved_init_cycle_pool = NULL;
+        }
+
         ngx_destroy_pool(old_cycle->pool);
         cycle->old_cycle = NULL;
 

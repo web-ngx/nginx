@@ -118,4 +118,6 @@ void ngx_cpuinfo(void);
 #define NGX_DISABLE_SYMLINKS_NOTOWNER   2
 #endif
 
+extern ngx_pool_t        *saved_init_cycle_pool;
+
 #endif /* _NGX_CORE_H_INCLUDED_ */

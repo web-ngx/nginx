@@ -690,6 +690,11 @@ ngx_master_process_exit(ngx_cycle_t *cycle)
     ngx_exit_cycle.files_n = ngx_cycle->files_n;
     ngx_cycle = &ngx_exit_cycle;
 
+    if (saved_init_cycle_pool != NULL && saved_init_cycle_pool != cycle->pool) {
+        ngx_destroy_pool(saved_init_cycle_pool);
+        saved_init_cycle_pool = NULL;
+    }
+
     ngx_destroy_pool(cycle->pool);
 
     exit(0);
