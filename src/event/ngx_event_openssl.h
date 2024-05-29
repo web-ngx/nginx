@@ -12,8 +12,6 @@
 #include <ngx_config.h>
 #include <ngx_core.h>
 
-#define OPENSSL_SUPPRESS_DEPRECATED
-
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/bn.h>
@@ -41,16 +39,6 @@
 #include <openssl/x509v3.h>
 
 #define NGX_SSL_NAME     "OpenSSL"
-
-
-#if (defined LIBRESSL_VERSION_NUMBER && OPENSSL_VERSION_NUMBER == 0x20000000L)
-#undef OPENSSL_VERSION_NUMBER
-#if (LIBRESSL_VERSION_NUMBER >= 0x3050000fL)
-#define OPENSSL_VERSION_NUMBER  0x1010000fL
-#else
-#define OPENSSL_VERSION_NUMBER  0x1000107fL
-#endif
-#endif
 
 
 #if (OPENSSL_VERSION_NUMBER >= 0x10100001L)
