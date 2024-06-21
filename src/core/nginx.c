@@ -399,15 +399,18 @@ main(int argc, char *const *argv)
 static void
 ngx_show_version_info(void)
 {
-    ngx_write_stderr("nginx version: " NGINX_VER_BUILD NGX_LINEFEED);
+    if (ngx_show_version) {
+        ngx_write_stderr("nginx version: " NGINX_VER_BUILD NGX_LINEFEED);
+    }
 
     if (ngx_show_help) {
+        ngx_write_stderr(NGX_LINEFEED);
         ngx_write_stderr(
             "Usage: nginx [-?hvVtTq] [-s signal] [-p prefix]" NGX_LINEFEED
             "             [-e filename] [-c filename] [-g directives]"
                           NGX_LINEFEED NGX_LINEFEED
             "Options:" NGX_LINEFEED
-            "  -?,-h         : this help" NGX_LINEFEED
+            "  -?,-h,--help  : this help" NGX_LINEFEED
             "  -v            : show version and exit" NGX_LINEFEED
             "  -V            : show version and configure options then exit"
                                NGX_LINEFEED
@@ -821,18 +824,39 @@ ngx_get_options(int argc, char *const *argv)
 
         if (*p++ != '-') {
             ngx_log_stderr(0, "invalid option: \"%s\"", argv[i]);
-            return NGX_ERROR;
+            goto invalid_option;
+        }
+
+        if (*p == 0) {
+            ngx_log_stderr(0, "incomplete option: \"%s\"", argv[i]);
+            goto invalid_option;
         }
 
         while (*p) {
 
             switch (*p++) {
 
+            case '-':
+
+                if (*p == 0) {
+                    ngx_log_stderr(0, "incomplete option: \"%s\"", argv[i]);
+                    goto invalid_option;
+                }
+
+                if (*p == '?' || *p == 'h') {
+                    ngx_show_version = 1;
+                    ngx_show_help = 1;
+                    return NGX_OK;
+                }
+
+                ngx_log_stderr(0, "invalid option: \"%s\"", argv[i]);
+                goto invalid_option;
+
             case '?':
             case 'h':
                 ngx_show_version = 1;
                 ngx_show_help = 1;
-                break;
+                return NGX_OK;
 
             case 'v':
                 ngx_show_version = 1;
@@ -938,11 +962,11 @@ ngx_get_options(int argc, char *const *argv)
                 }
 
                 ngx_log_stderr(0, "invalid option: \"-s %s\"", ngx_signal);
-                return NGX_ERROR;
+                goto invalid_option;
 
             default:
                 ngx_log_stderr(0, "invalid option: \"%c\"", *(p - 1));
-                return NGX_ERROR;
+                goto invalid_option;
             }
         }
 
@@ -952,6 +976,15 @@ ngx_get_options(int argc, char *const *argv)
     }
 
     return NGX_OK;
+
+invalid_option:
+
+    ngx_show_help = 1;
+    ngx_show_version = 0;
+
+    ngx_show_version_info();
+
+    return NGX_ERROR;
 }
 
 
