@@ -1051,7 +1051,11 @@ ngx_ssl_info_callback(const ngx_ssl_conn_t *ssl_conn, int where, int ret)
             c->ssl->session_timeout_set = 1;
 
             now = ngx_time();
+#ifdef OPENSSL_NO_DEPRECATED_3_4
+            time = SSL_SESSION_get_time_ex(sess);
+#else
             time = SSL_SESSION_get_time(sess);
+#endif
             timeout = SSL_SESSION_get_timeout(sess);
             conf_timeout = SSL_CTX_get_timeout(c->ssl->session_ctx);
 
@@ -1061,7 +1065,11 @@ ngx_ssl_info_callback(const ngx_ssl_conn_t *ssl_conn, int where, int ret)
                 SSL_SESSION_set1_id_context(sess, (unsigned char *) "", 0);
 
             } else {
+#ifdef OPENSSL_NO_DEPRECATED_3_4
+                SSL_SESSION_set_time_ex(sess, now);
+#else
                 SSL_SESSION_set_time(sess, now);
+#endif
                 SSL_SESSION_set_timeout(sess, timeout - (now - time));
             }
         }

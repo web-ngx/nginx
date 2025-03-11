@@ -513,7 +513,13 @@ ngx_quic_crypto_common(ngx_quic_secret_t *s, ngx_str_t *out,
         }
     }
 
-    if (EVP_CIPHER_mode(EVP_CIPHER_CTX_cipher(ctx)) == EVP_CIPH_CCM_MODE
+    if (EVP_CIPHER_mode(
+#ifdef OPENSSL_NO_DEPRECATED_3_0
+        EVP_CIPHER_CTX_get0_cipher(ctx)
+#else
+        EVP_CIPHER_CTX_cipher(ctx)
+#endif
+        ) == EVP_CIPH_CCM_MODE
         && EVP_CipherUpdate(ctx, NULL, &len, NULL, in->len) != 1)
     {
         ngx_ssl_error(NGX_LOG_INFO, log, 0, "EVP_CipherUpdate() failed");
